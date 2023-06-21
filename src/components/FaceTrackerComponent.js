@@ -14,7 +14,7 @@ const FaceTrackerComponent = (props) => {
         bindEvent();
     }
     function bindEvent(){
-        
+      
         window.addEventListener(
             "CY_FACE_DETECTOR_RESULT",
             handleFaceEvents
@@ -25,7 +25,7 @@ const FaceTrackerComponent = (props) => {
     function handleFaceEvents (evt)  {
         if (evt.detail && evt.detail.rects && evt.detail.rects.length > 0) {
         const $vid = props.videoEl.current;
-
+        
         const scale_w = $vid.offsetWidth / sdk_w.current;
         const scale_h = $vid.offsetHeight / sdk_h.current;
 

@@ -12,7 +12,7 @@ import EngagementComponent from "./components/EngagementComponent";
 import FaceTrackerComponent from "./components/FaceTrackerComponent";
 import MoodComponent from "./components/MoodComponent";
 import EmotionBarsComponent from "./components/EmotionBarsComponent";
-
+import { PolarArea } from 'react-chartjs-2';
 function App() {
 
   const mphToolsState = useExternalScript("https://sdk.morphcast.com/mphtools/v1.0/mphtools.js");
@@ -21,43 +21,34 @@ function App() {
 
   useEffect(() => {
     videoEl.current = document.getElementById("videoEl");
-    async function getAiSdk (){
-      if(aiSdkState === "ready" && mphToolsState === "ready"){
+    async function getAiSdk() {
+      if (aiSdkState === "ready" && mphToolsState === "ready") {
         const { source, start } = await getAiSdkControls();
-      await source.useCamera({
-        toVideoElement: document.getElementById("videoEl"),
-      });
+        await source.useCamera({
+          toVideoElement: document.getElementById("videoEl"),
+        });
         await start();
-        
+
       }
-     
+
     }
     getAiSdk();
   }, [aiSdkState, mphToolsState]);
 
+
+
   return (
     <div className="App">
       <header className="App-header">
-        <div style={{display:"flex", flexDirection: "column", alignItems:"center"}}>
-          <div style={{width:"640px", height: "480px", position:"relative"}}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{ width: "640px", height: "480px", position: "relative" }}>
             <video id="videoEl"></video>
             <FaceTrackerComponent videoEl={videoEl}></FaceTrackerComponent>
           </div>
-          <GenderComponent></GenderComponent>
-          <hr className="solid" style={{width:"100%"}}></hr>
-          <DominantEmotionComponent></DominantEmotionComponent>
-          <hr className="solid" style={{width:"100%"}}></hr>
-          <AgeComponent></AgeComponent>
-          <hr className="solid" style={{width:"100%"}}></hr>
-          <FeatureComponent></FeatureComponent>
-          <hr className="solid" style={{width:"100%"}}></hr>
-          <EngagementComponent></EngagementComponent>
-          <hr className="solid" style={{width:"100%"}}></hr>
           <MoodComponent></MoodComponent>
-          <hr className="solid" style={{width:"100%"}}></hr>
-          <EmotionBarsComponent></EmotionBarsComponent>
-          <hr className="solid" style={{width:"100%"}}></hr>
-          
+
+          <hr className="solid" style={{ width: "100%" }}></hr>
+
         </div>
       </header>
     </div>
