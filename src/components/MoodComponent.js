@@ -261,7 +261,6 @@ const MoodComponent = () => {
           if (emotionResult?.length > 0) {
             setIntervals(intervals + 1)
           }
-
         })
       }, 1000)
       window.addEventListener("resize", fn2);
@@ -398,7 +397,7 @@ const MoodComponent = () => {
   // }
 
   const generateNewTimestamp = (arr, maxLength = 9) => {
-    if (arr.length >= maxLength) {
+    if (arr.length > maxLength + 1) {
       return arr?.map((v, key) => { return key + 1 }).slice(arr?.length - maxLength, arr?.length)
     } else {
       let res = []
