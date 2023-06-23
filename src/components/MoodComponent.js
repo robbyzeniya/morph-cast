@@ -159,30 +159,20 @@ const MoodComponent = () => {
   }
 
   const summaryTopTen = () => {
-    const arr = topTenData?.reduce((acc, obj) => {
-      const key = obj?.name;
-      if (!acc[key]) {
-        acc[key] = 0;
-      }
-      acc[key] += obj?.value;
-      return acc;
-    }, {});
-
-    let sum = Object.keys(arr).reduce((s, k) => s += arr[k], 0);
-    let result = Object.keys(arr).map(k => {
+    let result = topTenData?.map((v) => {
       return {
-        name: k,
-        value: arr[k] / sum * 100
+        name: v?.name,
+        value: v?.value * 100
       }
-    });
-    const sortedArray = result?.sort((a, b) => b?.value - a?.value);
+    })
+    const sortedArray = result?.sort((a, b) => b.value - a.value);
     const top10 = sortedArray.slice(0, 10);
+
     const totalSum = top10.reduce((sum, obj) => sum + obj.value, 0);
     const res = top10.map(obj => ({
       ...obj,
-      percentage: (obj?.value / totalSum) * 100
+      percentage: (obj.value / totalSum) * 100
     }));
-
     return res
   }
 
@@ -261,7 +251,7 @@ const MoodComponent = () => {
 
           let objx = event?.detail?.face_arousal_valence?.affects38
           let xx = Object.entries(objx).map(([key, value]) => ({ name: key, value: value }))
-          setTopTenData([...topTenData, ...xx])
+          setTopTenData(xx)
           setFrameTimeStamp([...frameTimeStamp, event.detail.camera.frameTimestamp])
           setEmotionData(emotionData.concat(obj))
           setEngangmentData(engangmentData.concat(obj2))
@@ -645,7 +635,7 @@ const MoodComponent = () => {
                       {v?.name}
                     </div>
                     <div className="detail-info">
-                      {parseFloat(v?.percentage).toFixed(3)} %
+                      {parseFloat(v?.value).toFixed(2)} %
                     </div>
                   </div>
                 </>
