@@ -1,8 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import "./componentCSS/moodComponent.css"
 import Chart from "chart.js/auto";
-import { PolarArea } from "react-chartjs-2";
+import { PolarArea, Line } from "react-chartjs-2";
+import dayjs from 'dayjs';
+import Button from 'react-bootstrap/Button';
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 const MoodComponent = () => {
+
+  const MOOD = 1
+  const EMOTION = 2
+  const ENGANGMENT = 2
+
+
   const grid = useRef(undefined);
   const pin_wrap = useRef(undefined);
   const pin = useRef(undefined);
@@ -13,19 +23,141 @@ const MoodComponent = () => {
   const [conductive, setConductive] = useState(0)
   const [highControl, setHighControl] = useState(0)
 
-  const [populateData, setPopulateData] = useState([])
-  const calcObj = (total) => {
-    return Object.values(total).reduce((a, b) => a + b, 0)
+
+  const [frameTimeStamp, setFrameTimeStamp] = useState([])
+  const [moodCount, setMoodCount] = useState([])
+  const [emotionData, setEmotionData] = useState([])
+  const [emotionResult, setEmotionResult] = useState([])
+  const [emotionChart, setEmotionChart] = useState([])
+
+  const [engangmentData, setEngangmentData] = useState([])
+  const [engangmentResult, setEngangmentResult] = useState([])
+  const [engangmentChart, setEngangmentChart] = useState([])
+
+  const summaryEmotion = () => {
+
+    const arr = emotionData?.reduce((acc, obj) => {
+      const key = obj?.name;
+      if (!acc[key]) {
+        acc[key] = 0;
+      }
+      acc[key] += obj?.value;
+      return acc;
+    }, {});
+
+    let sum = Object.keys(arr).reduce((s, k) => s += arr[k], 0);
+    let result = Object.keys(arr).map(k => {
+      return {
+        name: k,
+        value: parseInt(arr[k] / sum * 100)
+      }
+    });
+
+    setEmotionResult([...emotionResult, ...result])
+
+
+
+    let output = emotionResult?.reduce(function (o, cur) {
+      let occurs = o.reduce(function (n, item, i) {
+        return (item.name === cur.name) ? i : n;
+      }, -1);
+      if (occurs >= 0) {
+        o[occurs].value = o[occurs].value.concat(cur.value);
+
+      } else {
+        let obj = {
+          name: cur.name,
+          value: [cur.value]
+        };
+        o = o.concat([obj]);
+      }
+
+      return o;
+    }, []);
+    return output
+
   }
 
-  const summaryPercentage = (data, key) => {
 
-    let sum = data?.reduce((s, { value }) => s + value, 0),
-      result = data?.map(({ name, value }) => ({ name, percentage: isNaN(value * 100 / sum) ? 0 : value * 100 / sum }));
-    let res = result?.find((e) => e.name == key)
-    return res?.percentage
+  const summaryEngangment = () => {
+
+    const arr = engangmentData?.reduce((acc, obj) => {
+      const key = obj?.name;
+      if (!acc[key]) {
+        acc[key] = 0;
+      }
+      acc[key] += obj?.value;
+      return acc;
+    }, {});
+
+    let sum = Object.keys(arr).reduce((s, k) => s += arr[k], 0);
+    let result = Object.keys(arr).map(k => {
+      return {
+        name: k,
+        value: parseInt(arr[k] / sum * 100)
+      }
+    });
+
+    setEngangmentResult([...engangmentResult, ...result])
+
+
+
+    let output = engangmentResult?.reduce(function (o, cur) {
+      let occurs = o.reduce(function (n, item, i) {
+        return (item.name === cur.name) ? i : n;
+      }, -1);
+      if (occurs >= 0) {
+        o[occurs].value = o[occurs].value.concat(cur.value);
+
+      } else {
+        let obj = {
+          name: cur.name,
+          value: [cur.value]
+        };
+        o = o.concat([obj]);
+      }
+
+      return o;
+    }, []);
+    return output
+
   }
 
+  const summaryPercentage = (type) => {
+    let uniqueItems;
+    let totalItems;
+    let filtering;
+    if (type === MOOD) {
+      totalItems = moodCount?.length
+      uniqueItems = [...new Set(moodCount)]
+      filtering = moodCount
+    }
+
+    uniqueItems.forEach(currValue => {
+      const numItems = filtering?.filter(datax => datax === currValue)
+      let val = numItems.length * 100 / totalItems
+      if (type === MOOD) {
+        if (currValue === 'High Control') {
+          setHighControl(val)
+        }
+        if (currValue === 'Obstructive') {
+          setObstructive(val)
+        }
+
+        if (currValue === 'Low Control') {
+          setLowControl(val)
+        }
+
+        if (currValue === 'Conductive') {
+          setConductive(val)
+        }
+      }
+
+    })
+    return true
+
+  }
+  const [startInterval, setStartInterval] = useState(false)
   useEffect(() => {
     grid.current = document.querySelector("#grid");
     pin_wrap.current = document.querySelector(".pin_wrap");
@@ -46,6 +178,70 @@ const MoodComponent = () => {
     function bindEvent() {
       resetTimeout();
       window.addEventListener("CY_FACE_AROUSAL_VALENCE_RESULT", fn);
+      window.addEventListener("CY_FACE_POSITIVITY_RESULT", evt => {
+        // console.log(evt)
+
+
+      })
+
+      // window.addEventListener("CY_FACE_POSITIVITY_RESULT", evt => console.log('positivity', evt.detail));
+
+      setTimeout(() => {
+        window.addEventListener("CY_EVENT_BARRIER", (event) => {
+          let obj = [
+            {
+              name: 'Angry',
+              value: event.detail.face_emotion?.emotion?.Angry,
+            },
+            {
+              name: 'Disgust',
+              value: event.detail.face_emotion?.emotion?.Disgust,
+            },
+            {
+              name: 'Fear',
+              value: event.detail.face_emotion?.emotion?.Happy,
+            },
+            {
+              name: 'Happy',
+              value: event.detail.face_emotion?.emotion?.Fear,
+            },
+            {
+              name: 'Surprise',
+              value: event.detail.face_emotion?.emotion?.Surprise,
+            },
+            {
+              name: 'Sad',
+              value: event.detail.face_emotion?.emotion?.Sad,
+            },
+            {
+              name: 'Neutral',
+              value: event.detail.face_emotion?.emotion?.Neutral,
+            }
+          ]
+
+          let obj2 = [
+            {
+              name: 'attention',
+              value: event.detail.face_attention.attention
+            },
+            {
+              name: 'positivity',
+              value: event.detail.face_positivity.positivity
+            }
+          ]
+
+
+          console.log(event.detail)
+
+          setFrameTimeStamp([...frameTimeStamp, event.detail.camera.frameTimestamp])
+          setEmotionData(emotionData.concat(obj))
+          setEngangmentData(engangmentData.concat(obj2))
+          setEmotionChart(summaryEmotion())
+          setEngangmentChart(summaryEngangment())
+
+
+        })
+      }, 1000)
       window.addEventListener("resize", fn2);
     }
 
@@ -53,55 +249,12 @@ const MoodComponent = () => {
     function fn(evt) {
 
       let quadrant = evt.detail.output.quadrant;
-      const total = calcObj(evt.detail.output.affects98)
+      // const total = calcObj(evt.detail.output.affects98)
 
-      let _temp_obstructive = 0
-      let _temp_highControl = 0
-      let _temp_conductive = 0
-      let _temp_lowcontrol = 0
-
-      if (quadrant === "Obstructive") {
-        _temp_obstructive = total
-
-      }
-      if (quadrant === "High Control") {
-        _temp_highControl = total
-      }
-      if (quadrant === "Conductive") {
-        _temp_conductive = total
-      }
-
-      if (quadrant === "Low Control") {
-        _temp_lowcontrol = total
-      }
-
-      let data = [
-        {
-          name: 'obstructive',
-          value: _temp_obstructive,
-        },
-        {
-          name: 'lowControl',
-          value: _temp_lowcontrol,
-        },
-        {
-          name: 'conductive',
-          value: _temp_conductive,
-        },
-        {
-          name: 'highControl',
-          value: _temp_highControl,
-        }
-      ]
-
-      setObstructive(summaryPercentage(data, 'obstructive'))
-      setLowControl(summaryPercentage(data, 'lowControl'))
-      setConductive(summaryPercentage(data, 'conductive'))
-      setHighControl(summaryPercentage(data, 'highControl'))
-
+      setMoodCount([...moodCount, quadrant])
+      summaryPercentage(MOOD)
       showPin();
       setEmotion(evt.detail.output);
-
       resetTimeout();
     };
 
@@ -167,10 +320,10 @@ const MoodComponent = () => {
       pin.current.style.opacity = 0;
     }
 
-  }, [grid, pin, pin_wrap, populateData]);
+  }, [grid, pin, pin_wrap, moodCount]);
 
 
-  const data = {
+  const dataPolar = {
     labels: ['High Control', 'Conductive', 'Low Control', 'Obstructive'],
     datasets: [
       {
@@ -187,7 +340,7 @@ const MoodComponent = () => {
     ],
   };
 
-  const options = {
+  const optionsPolar = {
     responsive: true,
     scales: {
       y: {
@@ -212,36 +365,256 @@ const MoodComponent = () => {
       },
       title: {
         display: true,
-        text: 'Sample Chart Js'
+        text: `Quadrant Polar Area`,
+        font: {
+          size: 30
+        }
       }
     }
 
   }
+
+
+
+  const generateNewTimestamp = (arr, lengthArr = 9) => {
+    if (arr.length >= lengthArr) {
+      return arr?.slice(arr?.length - lengthArr, arr?.length)
+    } else {
+      let res = []
+      for (let i = 0; i < lengthArr; i++) {
+        let time = dayjs().unix()
+        res.push(time)
+      }
+      return res
+    }
+
+  }
+
+  const getData = (key) => {
+
+    let x = emotionChart?.filter((v) => {
+      return v.name === key
+    }).map((v) => {
+      return v?.value
+    })
+    return x?.length > 0 ? x[0] : []
+  }
+
+  const getDataEngangment = (key) => {
+
+    let x = engangmentChart?.filter((v) => {
+      return v.name === key
+    }).map((v) => {
+      return v?.value
+    })
+    return x?.length > 0 ? x[0] : []
+  }
+
+
+  const dataEmotionOT = {
+    labels: generateNewTimestamp(frameTimeStamp),
+    datasets: [
+      {
+        label: 'Angry',
+        data: getData('Angry'),
+        borderColor: 'rgb(168, 54, 50)',
+        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+        spanGaps: true,
+      },
+      {
+        label: 'Disgust',
+        data: getData('Disgust'),
+        borderColor: 'rgb(76, 168, 50)',
+        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+        spanGaps: false,
+      },
+      {
+        label: 'Fear',
+        data: getData('Fear'),
+        borderColor: 'rgb(147, 41, 166)',
+        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+        spanGaps: false,
+      },
+      {
+        label: 'Happy',
+        data: getData('Happy'),
+        borderColor: 'rgb(189, 191, 31)',
+        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+        spanGaps: false,
+      },
+      {
+        label: 'Sad',
+        data: getData('Sad'),
+        borderColor: 'rgb(40, 143, 191)',
+        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+        spanGaps: false,
+      },
+      {
+        label: 'Surprise',
+        data: getData('Surprise'),
+        borderColor: 'rgb(224, 132, 160)',
+        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+        spanGaps: false,
+      },
+      {
+        label: 'Neutral',
+        data: getData('Neutral'),
+        borderColor: 'rgb(81, 87, 89)',
+        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+        spanGaps: false,
+      },
+    ],
+  };
+
+
+
+  const dataEngagment = {
+    labels: generateNewTimestamp(frameTimeStamp),
+    datasets: [
+      {
+        label: 'Attention',
+        data: getDataEngangment('attention'),
+        borderColor: 'rgb(168, 54, 50)',
+        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+        spanGaps: true,
+      },
+      {
+        label: 'Positivy',
+        data: getDataEngangment('positify'),
+        borderColor: 'rgb(76, 168, 50)',
+        backgroundColor: 'rgba(53, 162, 235, 0.5)',
+        spanGaps: false,
+      },
+    ],
+  };
+
+  const optionsEmotion = {
+    responsive: true,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
+    plugins: {
+      title: {
+        display: true,
+      },
+    },
+    responsive: true,
+
+    scales: {
+      y: {
+        min: 0,
+        max: 100,
+      },
+    },
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: `Emotion Overtime`,
+        font: {
+          size: 30
+        }
+      }
+    }
+  }
+  const optionsEngangment = {
+    responsive: true,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
+    plugins: {
+      title: {
+        display: true,
+      },
+    },
+    responsive: true,
+
+    scales: {
+      y: {
+        min: 0,
+        max: 100,
+      },
+    },
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: `Emotion Engangment`,
+        font: {
+          size: 30
+        }
+      }
+    }
+  }
+  let predictedRef = useRef(null)
+  const generatePDF = async () => {
+
+    const canvas = await html2canvas(predictedRef.current, {
+      scale: 1.1,
+      allowTaint: true,
+      useCORS: true,
+      logging: true,
+      quality: 4,
+      dpi: 320,
+    });
+
+    let imgWidth = 180;
+    let imgHeight = canvas.height * imgWidth / canvas.width;
+    const image = canvas.toDataURL("image/jpeg");
+
+    const pdf = new jsPDF('p', 'mm', [200.9, 400]);
+    await pdf.addImage(image, 'JPEG', 0, 0, imgWidth, imgHeight);
+    await pdf.save(`Mood Details.pdf`);
+
+  }
+
+
+
+
+
   return (
     <>
 
       <p style={{ fontSize: "20px" }}>Mood Component:</p>
-      <div style={{ display: 'flex' }}>
-        <div style={{ position: "relative", height: "550px", width: "600px" }}>
-          <div className="wrapper" id="grid">
-            {(gridN === 38) && <img alt="" src="baseGraph.png" style={{ width: "100%", height: "100%" }} />}
-            {(gridN === 98) && <img alt="" src="advancedGraph.png" style={{ width: "100%", height: "100%" }} />}
-            <div className="pin_wrap">
-              <div className="pin"></div>
-            </div>
+      <div style={{ position: "relative", height: "550px", width: "100%" }}>
+        <div className="wrapper" id="grid">
+          {(gridN === 38) && <img alt="" src="baseGraph.png" style={{ width: "100%", height: "100%" }} />}
+          {(gridN === 98) && <img alt="" src="advancedGraph.png" style={{ width: "100%", height: "100%" }} />}
+          <div className="pin_wrap">
+            <div className="pin"></div>
           </div>
         </div>
-        <div style={{ width: '500px' }}>
-          <PolarArea type='polarArea'
-            options={options} data={data} />;
-        </div>
       </div>
+      <section style={{ width: '100%' }} ref={predictedRef}>
+        <div style={{ width: '100%' }}>
+          <h1 className="text-black">Data Polar</h1>
+          <PolarArea type='polarArea'
+            options={optionsPolar} data={dataPolar} />
+        </div>
+        <div style={{ width: '100%' }}>
+          <h1 className="text-black">Emotion Overtime</h1>
+          <Line options={optionsEmotion} data={dataEmotionOT} />
+        </div>
+        <div style={{ width: '100%' }}>
+          <h1 className="text-black">Engagement Overtime</h1>
+          <Line options={optionsEngangment} data={dataEngagment} />
+        </div>
+      </section>
+
       {/* <div>
         <button onClick={() => { setGridN(38) }} disabled={gridN === 38}>38 Affects</button>
         <button onClick={() => { setGridN(98) }} disabled={gridN === 98}>98 Affects</button>
       </div> */}
       <div>
-        <button>Render Caps</button>
+        <Button onClick={() => {
+          generatePDF()
+        }} variant="primary">Export</Button>
       </div>
     </>
   );
