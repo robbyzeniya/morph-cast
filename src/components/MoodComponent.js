@@ -175,7 +175,7 @@ const MoodComponent = () => {
     }));
     return res
   }
-
+  const [intervals, setIntervals] = useState(0)
   useEffect(() => {
     grid.current = document.querySelector("#grid");
     pin_wrap.current = document.querySelector(".pin_wrap");
@@ -258,6 +258,9 @@ const MoodComponent = () => {
           setEmotionChart(summaryEmotion())
           setEngangmentChart(summaryEngangment())
           setTopTenResult(summaryTopTen())
+          if (emotionResult?.length > 0) {
+            setIntervals(intervals + 1)
+          }
 
         })
       }, 1000)
@@ -381,34 +384,29 @@ const MoodComponent = () => {
     plugins: {
       legend: {
         position: 'top',
-      },
-      title: {
-        display: true,
-        text: `Quadrant Polar Area`,
-        font: {
-          size: 30
-        }
       }
     }
 
   }
 
+  // const generateZero = (val, array) => {
+  //   let arr = []
+  //   for (let i = 0; i < val; i++) {
+  //     arr.push(0)
+  //   }
+  //  const res = arr.concat
+  // }
 
-
-  const generateNewTimestamp = (arr, lengthArr = 9) => {
-    if (arr.length >= lengthArr) {
-      return arr?.map((v, key) => {
-        return key + 1
-      }).slice(arr?.length - lengthArr, arr?.length)
+  const generateNewTimestamp = (arr, maxLength = 9) => {
+    if (arr.length >= maxLength) {
+      return arr?.map((v, key) => { return key + 1 }).slice(arr?.length - maxLength, arr?.length)
     } else {
       let res = []
-      for (let i = 0; i < lengthArr; i++) {
-        let time = dayjs().unix()
+      for (let i = 1; i <= intervals; i++) {
         res.push(i)
       }
       return res
     }
-
   }
 
   const getDataEmotion = (key) => {
@@ -538,13 +536,6 @@ const MoodComponent = () => {
       legend: {
         position: 'top',
       },
-      title: {
-        display: true,
-        text: `Emotion Overtime`,
-        font: {
-          size: 30
-        }
-      }
     }
   }
   const optionsEngangment = {
@@ -570,13 +561,7 @@ const MoodComponent = () => {
       legend: {
         position: 'top',
       },
-      title: {
-        display: true,
-        text: `Emotion Engangment`,
-        font: {
-          size: 30
-        }
-      }
+
     }
   }
   let predictedRef = useRef(null)
@@ -615,13 +600,16 @@ const MoodComponent = () => {
       </div>
       <section style={{ width: '100%' }} ref={predictedRef}>
         <div style={{ width: '100%', marginBottom: 30 }}>
+          <h2 style={{ color: '#333' }}>Quadrant Polar</h2>
           <PolarArea type='polarArea'
             options={optionsPolar} data={dataPolar} />
         </div>
         <div style={{ width: '100%', marginBottom: 30 }}>
+          <h2 style={{ color: '#333' }}>Emotion Overtime</h2>
           <Line options={optionsEmotion} data={dataEmotionOT} />
         </div>
         <div style={{ width: '100%', marginBottom: 30 }}>
+          <h2 style={{ color: '#333' }}>Emotion Engangment</h2>
           <Line options={optionsEngangment} data={dataEngagment} />
         </div>
         <div>
