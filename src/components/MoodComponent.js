@@ -94,7 +94,7 @@ const MoodComponent = () => {
     let result = Object.keys(arr).map(k => {
       return {
         name: k,
-        value: parseInt(arr[k] / sum * 100)
+        value: k === 'attention' && parseInt(arr[k] / sum * 100) === 0 ? 1 : parseInt(arr[k] / sum * 100)
       }
     });
 
@@ -401,7 +401,7 @@ const MoodComponent = () => {
   }
 
   const getDataEngangment = (key) => {
-
+    console.log(engangmentChart)
     let x = engangmentChart?.filter((v) => {
       return v.name === key
     }).map((v) => {
@@ -480,7 +480,7 @@ const MoodComponent = () => {
       },
       {
         label: 'Positivy',
-        data: getDataEngangment('positify'),
+        data: getDataEngangment('positivity'),
         borderColor: 'rgb(76, 168, 50)',
         backgroundColor: 'rgba(53, 162, 235, 0.5)',
         spanGaps: false,
