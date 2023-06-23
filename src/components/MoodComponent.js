@@ -172,7 +172,7 @@ const MoodComponent = () => {
     let result = Object.keys(arr).map(k => {
       return {
         name: k,
-        value: parseInt(arr[k] / sum * 100)
+        value: arr[k] / sum * 100
       }
     });
     const sortedArray = result?.sort((a, b) => b?.value - a?.value);
@@ -593,14 +593,14 @@ const MoodComponent = () => {
   const generatePDF = async () => {
 
     const canvas = await html2canvas(predictedRef.current, {
-      scale: 1,
+      scale: 1.1,
       dpi: 320,
     });
 
-    let imgWidth = 210;
+    let imgWidth = 250;
     let imgHeight = canvas.height * imgWidth / canvas.width;
     const image = canvas.toDataURL("image/jpeg");
-    const pdf = new jsPDF('p', 'mm', [210, 800]);
+    const pdf = new jsPDF('p', 'mm', [250, 800]);
     await pdf.addImage(image, 'JPEG', 0, 0, imgWidth, imgHeight);
     await pdf.save(`Mood Details.pdf`);
 
@@ -635,7 +635,7 @@ const MoodComponent = () => {
           <Line options={optionsEngangment} data={dataEngagment} />
         </div>
         <div>
-          <h2 style={{color:'#333'}}>Top 10</h2>
+          <h2 style={{ color: '#333' }}>Top 10</h2>
           {
             topTenResult?.map((v) => {
               return (
